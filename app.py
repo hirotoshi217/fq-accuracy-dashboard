@@ -1,5 +1,4 @@
 ## 🐍 app.py
-```python
 from flask import Flask, render_template, request, abort
 import pandas as pd
 import os
