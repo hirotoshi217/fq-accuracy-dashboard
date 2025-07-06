@@ -1,37 +1,62 @@
-from flask import Flask, render_template, request, jsonify
+## 🐍 app.py
+```python
+from flask import Flask, render_template, request, abort
 import pandas as pd
+import os
 
 app = Flask(__name__)
-# 起動時に CSV を読み込んでおく
-df_aci = pd.read_csv('ticker_aci.csv', dtype={'ticker': str})
-df_data = pd.read_csv('merged_scores.csv', dtype={'code': str})
 
-@app.route('/')
+data_dir = os.path.join(os.path.dirname(__file__), 'data')
+df_aci = pd.read_csv(os.path.join(data_dir, 'ticker_aci.csv'), dtype={'ticker': str})
+df_scores = pd.read_csv(os.path.join(data_dir, 'merged_scores.csv'), dtype={'code': str})
+
+def compute_rank(series, code):
+    # 順位：1 が最高
+    sorted_vals = series.sort_values(ascending=False).reset_index()
+    sorted_vals['rank'] = sorted_vals.index + 1
+    s = sorted_vals.set_index(series.name)
+    val = df_aci.loc[df_aci['ticker']==code, series.name].iloc[0]
+    total = len(series)
+    rank = int(sorted_vals[sorted_vals[series.name]==val]['rank'])
+    return rank, total
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
-    return render_template('index.html')
+    result = None
+    if request.method == 'POST':
+        code = request.form.get('code', '').strip()
+        if code == '':
+            abort(400, 'Ticker code is required')
+        # ACI metrics
+        try:
+            row = df_aci[df_aci['ticker'] == code].iloc[0]
+        except IndexError:
+            abort(404, f'{code} not found')
 
-@app.route('/api/<ticker>')
-def api_ticker(ticker):
-    # ACIランキング
-    total = len(df_aci)
-    row = df_aci[df_aci['ticker']==ticker]
-    if row.empty:
-        return jsonify({'error':'該当ティッカーなし'}), 404
+        # 各指標ランキング
+        ranks = {}
+        for m in ['revenue_aci_weighted', 'op_profit_aci_weighted', 'net_profit_aci_weighted', 'aci_weighted']:
+            r, total = compute_rank(df_aci[m], code)
+            ranks[m] = {'rank': r, 'total': total, 'value': row[m]}
 
-    # 各モードごとのランクを求める関数
-    def get_rank(col):
-        rank = int((df_aci[col] > row[col].iloc[0]).sum()) + 1
-        return {'rank': rank, 'total': total}
-
-    info = {'ticker': ticker}
-    for col in ['revenue_aci_weighted','op_profit_aci_weighted','net_profit_aci_weighted','aci_weighted']:
-        info[col] = {
-            'value': float(row[col]),
-            **get_rank(col)
+        # 時系列データ (予想vs実績)
+        df_t = df_scores[df_scores['code']==code].sort_values('period')
+        plot_data = {
+            'periods': df_t['period'].tolist(),
+            'pred': {
+                'revenue': df_t['revenue'].tolist(),
+                'op_profit': df_t['op_profit'].tolist(),
+                'net_profit': df_t['net_profit'].tolist()
+            },
+            'actual': {
+                'revenue': df_t['actual_revenue'].tolist(),
+                'op_profit': df_t['actual_op_profit'].tolist(),
+                'net_profit': df_t['actual_net_profit'].tolist()
+            }
         }
-    # 予測 vs 実績の数値一覧
-    recs = df_data[df_data['code']==ticker].to_dict(orient='records')
-    return jsonify(info=info, records=recs)
+        result = {'code': code, 'ranks': ranks, 'plot_data': plot_data}
 
-if __name__=='__main__':
+    return render_template('index.html', result=result)
+
+if __name__ == '__main__':
     app.run(debug=True)

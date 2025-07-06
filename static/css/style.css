@@ -1,0 +1,9 @@
+body { font-family: Arial, sans-serif; background: #f9f9f9; margin: 0; padding: 20px; }
+.container { max-width: 800px; margin: auto; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+form { display: flex; gap: 8px; margin-bottom: 20px; }
+input { flex: 1; padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+button { padding: 8px 16px; border: none; background: #007BFF; color: #fff; border-radius: 4px; cursor: pointer; }
+button:hover { background: #0056b3; }
+.ranks { display: flex; gap: 16px; margin-bottom: 20px; }
+.rank-item { background: #eef; padding: 8px; border-radius: 4px; }
+.charts canvas { margin-bottom: 24px; width: 100% !important; height: 300px !important; }

@@ -1,17 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-  <meta charset="utf-8">
-  <title>四季報予想精度ダッシュボード</title>
+  <meta charset="UTF-8" />
+  <title>四季報予想精度検索</n  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <h1>ティッカーで検索</h1>
-  <input id="ticker-input" placeholder="例:1301" />
-  <button id="search-btn">検索</button>
+  <div class="container">
+    <h1>四季報予想精度検索</h1>
+    <form method="POST">
+      <input name="code" placeholder="Ticker code (例: 1301)" required />
+      <button type="submit">検索</button>
+    </form>
 
-  <div id="result"></div>
+    {% if result %}
+    <h2>結果: {{ result.code }}</h2>
+    <div class="ranks">
+      {% for key, info in result.ranks.items() %}
+      <div class="rank-item">
+        <strong>{{ key }}:</strong> {{ info.value | round(2) }} ({{ info.rank }}/{{ info.total }})
+      </div>
+      {% endfor %}
+    </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+    <div class="charts">
+      <canvas id="chart_revenue"></canvas>
+      <canvas id="chart_op_profit"></canvas>
+      <canvas id="chart_net_profit"></canvas>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/chart.js') }}"></script>
+    <script>
+      const data = {{ result.plot_data | tojson }};
+      createChart('chart_revenue', 'Revenue: Pred vs Actual', data.periods, data.pred.revenue, data.actual.revenue);
+      createChart('chart_op_profit', 'Operating Profit: Pred vs Actual', data.periods, data.pred.op_profit, data.actual.op_profit);
+      createChart('chart_net_profit', 'Net Profit: Pred vs Actual', data.periods, data.pred.net_profit, data.actual.net_profit);
+    </script>
+    {% endif %}
+  </div>
 </body>
 </html>

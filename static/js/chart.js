@@ -1,11 +1,16 @@
-document.getElementById('search-btn').onclick = async () => {
-  const t = document.getElementById('ticker-input').value.trim();
-  const res = await fetch(`/api/${t}`);
-  const data = await res.json();
-  if (res.status !== 200) {
-    document.getElementById('result').innerText = data.error;
-    return;
-  }
-  // ここで data.info と data.records をもとにHTML生成＆グラフ描画
-  // 例：順位表示やChart.jsによる折れ線／棒グラフなど
-};
+function createChart(canvasId, label, labels, predData, actualData) {
+  const ctx = document.getElementById(canvasId).getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        { label: '予想', data: predData, borderWidth: 2 },
+        { label: '実績', data: actualData, borderWidth: 2 }
+      ]
+    },
+    options: {
+      scales: { y: { beginAtZero: false } }
+    }
+  });
+}
