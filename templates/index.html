@@ -1,26 +1,26 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>四季報予想精度検索</n  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  <meta charset="UTF-8">
+  <title>四季報予想精度検索</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <div class="container">
     <h1>四季報予想精度検索</h1>
-    <form method="POST">
-      <input name="code" placeholder="Ticker code (例: 1301)" required />
+    <form method="POST" action="/">
+      <input type="text" name="code" placeholder="Ticker code (例: 1301)" required>
       <button type="submit">検索</button>
     </form>
 
     {% if result %}
     <h2>結果: {{ result.code }}</h2>
     <div class="ranks">
-      {% for key, info in result.ranks.items() %}
-      <div class="rank-item">
-        <strong>{{ key }}:</strong> {{ info.value | round(2) }} ({{ info.rank }}/{{ info.total }})
-      </div>
-      {% endfor %}
+      <div class="rank-item">売上予測精度: {{ result.ranks['revenue_aci_weighted']['rank'] }}/{{ result.ranks['revenue_aci_weighted']['total'] }}</div>
+      <div class="rank-item">営業利益予測精度: {{ result.ranks['op_profit_aci_weighted']['rank'] }}/{{ result.ranks['op_profit_aci_weighted']['total'] }}</div>
+      <div class="rank-item">純利益予測精度: {{ result.ranks['net_profit_aci_weighted']['rank'] }}/{{ result.ranks['net_profit_aci_weighted']['total'] }}</div>
+      <div class="rank-item">総合予測精度: {{ result.ranks['aci_weighted']['rank'] }}/{{ result.ranks['aci_weighted']['total'] }}</div>
     </div>
 
     <div class="charts">
